@@ -7,10 +7,8 @@ import Logo from '@/components/Logo';
 import { useToast } from '@/components/ui/use-toast';
 
 interface SummaryResponse {
-  output: {
-    summary: string;
-    key_takeaways: string;
-  };
+  summary: string;
+  keyTakeaways: string;
 }
 
 const Index = () => {
@@ -49,16 +47,34 @@ const Index = () => {
       // Parse the response text to JSON
       const data = JSON.parse(text);
       
-      if (data && Array.isArray(data) && data.length > 0) {
-        const summaryData = data[0] as SummaryResponse;
-        if (summaryData.output) {
-          setSummary(summaryData.output.summary);
-          setKeyTakeaways(summaryData.output.key_takeaways);
+      // Handle direct response format (not an array)
+      if (data && data.summary && data.keyTakeaways) {
+        setSummary(data.summary);
+        setKeyTakeaways(data.keyTakeaways);
+        setHasResults(true);
+      } else if (data && typeof data === 'object') {
+        // Try different response formats
+        if (data.output && data.output.summary && data.output.key_takeaways) {
+          // Format: { output: { summary, key_takeaways } }
+          setSummary(data.output.summary);
+          setKeyTakeaways(data.output.key_takeaways);
           setHasResults(true);
+        } else if (Array.isArray(data) && data.length > 0) {
+          // Format: [{ output: { summary, key_takeaways } }]
+          const firstItem = data[0];
+          if (firstItem.output && firstItem.output.summary && firstItem.output.key_takeaways) {
+            setSummary(firstItem.output.summary);
+            setKeyTakeaways(firstItem.output.key_takeaways);
+            setHasResults(true);
+          } else {
+            throw new Error('Invalid response array format');
+          }
         } else {
-          throw new Error('Invalid response format: missing output field');
+          console.error('Unexpected response format:', data);
+          throw new Error('Invalid response format');
         }
       } else {
+        console.error('Unexpected response data:', data);
         throw new Error('Invalid response format');
       }
     } catch (error) {
