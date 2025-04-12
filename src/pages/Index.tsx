@@ -40,13 +40,24 @@ const Index = () => {
         throw new Error('Failed to fetch summary');
       }
       
-      const data = await response.json();
+      // Add error handling for empty responses
+      const text = await response.text();
+      if (!text) {
+        throw new Error('Empty response received');
+      }
       
-      if (data && data.length > 0) {
+      // Parse the response text to JSON
+      const data = JSON.parse(text);
+      
+      if (data && Array.isArray(data) && data.length > 0) {
         const summaryData = data[0] as SummaryResponse;
-        setSummary(summaryData.output.summary);
-        setKeyTakeaways(summaryData.output.key_takeaways);
-        setHasResults(true);
+        if (summaryData.output) {
+          setSummary(summaryData.output.summary);
+          setKeyTakeaways(summaryData.output.key_takeaways);
+          setHasResults(true);
+        } else {
+          throw new Error('Invalid response format: missing output field');
+        }
       } else {
         throw new Error('Invalid response format');
       }
@@ -54,7 +65,7 @@ const Index = () => {
       console.error('Error:', error);
       toast({
         title: "Error",
-        description: "Failed to generate summary. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to generate summary. Please try again.",
         variant: "destructive",
       });
     } finally {

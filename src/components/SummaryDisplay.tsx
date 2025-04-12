@@ -73,7 +73,7 @@ const SummaryDisplay: React.FC<SummaryDisplayProps> = ({ summary, keyTakeaways, 
             {takeawaysList.map((takeaway, index) => (
               <li key={index} className="flex items-start">
                 <span className="text-accent mr-2">•</span>
-                <span className="text-foreground/90">{takeaway.replace('• ', '')}</span>
+                <span className="text-foreground/90">{takeaway.replace(/^•\s*/, '')}</span>
               </li>
             ))}
           </ul>
